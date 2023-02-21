@@ -3,9 +3,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:battery_plus/battery_plus.dart';
 
-// void main() {
-// runApp(const MyApp());
-// }
+void main() {
+runApp(const MyApp());
+}
 
 class MyApp extends StatelessWidget {
 const MyApp({Key? key}) : super(key: key);
@@ -53,8 +53,7 @@ void initState() {
 	getBatteryPerentage();
 														
 	});
-	
-														
+															
 }
 // method created to display battery percent
 void getBatteryPerentage() async {
@@ -87,11 +86,13 @@ Widget BatteryBuild(BatteryState state) {
 		height: 200,
 			
 		// ignore: prefer_const_constructors
-		child: (Icon(
-			Icons.battery_full,
-			size: 200,
-			color: Colors.green,
-		)),
+		// child: (Icon(
+		// 	Icons.battery_full,
+		// 	size: 200,
+		// 	color: Colors.green,
+		// )),
+
+    child:const Image(image: AssetImage("assets/images/bat9.png"))
 		);
 
 	// Second case is when battery is charging
@@ -104,11 +105,13 @@ Widget BatteryBuild(BatteryState state) {
 		height: 200,
 			
 		// ignore: prefer_const_constructors
-		child: (Icon(
-			Icons.battery_charging_full,
-			size: 200,
-			color: Colors.blue,
-		)),
+		// child: (Icon(
+		// 	Icons.battery_charging_full,
+		// 	size: 200,
+		// 	color: Colors.blue,
+		// )),
+
+    child:const Image(image: AssetImage("assets/images/bat0.png"))
 		);
 
 		// third case is when the battery is
@@ -122,12 +125,17 @@ Widget BatteryBuild(BatteryState state) {
 		height: 200,
 			
 		// ignore: prefer_const_constructors
-		child: (Icon(
-			Icons.battery_alert,
-			size: 200,
-			color: Colors.red,
-		)),
-		);
+		// child: (Icon(
+		// 	Icons.battery_alert,
+		// 	size: 200,
+		// 	color: Colors.red,
+		// )),
+
+
+    child:const Image(image: AssetImage("assets/images/bat10.png"))
+
+    );
+		
 	}
 }
 
@@ -140,20 +148,25 @@ Widget build(BuildContext context) {
 							style: TextStyle(color: Colors.white),),
 		centerTitle: true,
 	),
-	body: Center(
-		child: Column(
-			
-		mainAxisAlignment: MainAxisAlignment.center,
-		children:[
-			
-			// calling the custom widget
-			BatteryBuild(batteryState),
-			
-			// Displaying battery percentage
-			Text('Battery Percentage: $percentage',
-				style: const TextStyle(fontSize: 24),)
-			],
-		),
+	body: Container(
+    height: MediaQuery.of(context).size.height,
+    width: MediaQuery.of(context).size.width,
+    color: Colors.yellow,
+	  child: Center(
+	  	child: Column(
+	  		
+	  	mainAxisAlignment: MainAxisAlignment.center,
+	  	children:[
+	  		
+	  		// calling the custom widget
+	  		BatteryBuild(batteryState),
+	  		
+	  		// Displaying battery percentage
+	  		Text('Battery Percentage: $percentage',
+	  			style: const TextStyle(fontSize: 24),)
+	  		],
+	  	),
+	  ),
 	),
 	);
 }
