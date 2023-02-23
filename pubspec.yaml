@@ -38,6 +38,7 @@ dependencies:
   cupertino_icons: ^1.0.2
   battery_plus: ^3.0.2
   flutter_tts: ^3.5.1
+  workmanager: ^0.5.1
 
 dev_dependencies:
   flutter_test:
