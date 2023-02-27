@@ -4,9 +4,107 @@ import 'package:flutter/material.dart';
 import 'package:battery_plus/battery_plus.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:workmanager/workmanager.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-void main() {
+
+//!For background Tasks
+void backGroundTask()async{
+
+    var batterybg = Battery();
+    int percentagebg = 0;
+    FlutterTts ftts = FlutterTts();
+    BatteryState batteryState = BatteryState.full;
+    late StreamSubscription streamSubscription;
+  
+
+    Future<void> speaking({required String say})async{
+    await ftts.setLanguage("en-US");
+    await ftts.setSpeechRate(0.5); //speed of speech
+    await ftts.setVolume(1.0); //volume of speech
+    await ftts.setPitch(1); //pitc of sound
+    await ftts.speak(say);
+  }
+
+
+    void getBatteryState() {
+      streamSubscription = batterybg.onBatteryStateChanged.listen((state) {
+      batteryState = state;
+        });
+      }
+	
+
+    void getBatteryPerentage() async {
+      final level = await batterybg.batteryLevel;
+      percentagebg = level;
+      }
+
+
+  getMute () async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    bool mute = prefs.getBool("mute")!;
+    return mute;
+  }
+
+  getSliderVal () async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    int sliderVal = prefs.getInt("SliderVal")!;
+    return sliderVal;
+  }
+
+
+    bool mute = getMute() as bool;
+    int sliderVal = getSliderVal() as int;
+  //notchargingIconChange();
+    getBatteryState();
+    getBatteryPerentage();
+
+    if (batteryState == BatteryState.full && mute != true) {
+      speaking(say: "Battery is full\nPlease, Remove the charger!\n");
+    }else if(percentagebg == 100 && !mute){
+      speaking(say: "Battery is full\nPlease, Remove the charger!\n");
+    }
+
+    if (batteryState == BatteryState.discharging && !mute) {
+      if (percentagebg <= sliderVal * 10 && sliderVal * 10 != 100){
+      speaking(say: "Battery is $percentagebg\nPercent only\nPlease, Connect your charger!");}
+    }
+
+														
+	
+}
+
+const backgroundtask1 = "backgroundtask1";
+
+void callbackDispatcher() {
+  Workmanager().executeTask((task, inputData) async {
+    switch (task) {
+      case backgroundtask1:
+        // Code to run in background
+        backGroundTask();
+
+        
+        break;
+    }
+    return Future.value(true);
+  });
+}
+
+void main() async {
 WidgetsFlutterBinding.ensureInitialized();
+  await Workmanager().initialize(
+    callbackDispatcher,
+    isInDebugMode: true
+  );
+  await Workmanager().registerPeriodicTask(
+    "1",
+    backgroundtask1,
+    frequency: const Duration(minutes: 15),
+    //constraints: Constraints(
+      //networkType: NetworkType.connected,
+    //),
+  );
+
 
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []);
   SystemChrome.setPreferredOrientations([
@@ -18,7 +116,7 @@ runApp(const MyApp()));
 
 class MyApp extends StatelessWidget {
 const MyApp({Key? key}) : super(key: key);
-
+  
 // This widget is the root of your application.
 @override
 Widget build(BuildContext context) {
@@ -33,8 +131,11 @@ Widget build(BuildContext context) {
 }
 }
 
+  
+
+// ignore: must_be_immutable
 class MyHomePage extends StatefulWidget {
-const MyHomePage({
+  const MyHomePage({
 	Key? key,
 }) : super(key: key);
 
@@ -43,6 +144,7 @@ State<MyHomePage> createState() => _MyHomePageState();
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+
 var battery = Battery();
 int percentage = 0;
 late Timer timer;
@@ -52,14 +154,39 @@ FlutterTts ftts = FlutterTts();
 BatteryState batteryState = BatteryState.full;
 late StreamSubscription streamSubscription;
 int check5 = 0;
-int check1 = 0;
+int batteryChargingcheck = 0;
 int splash = 0;
 bool splashCheck = false;
-int _sliderVal = 3;
+int  sliderVal = 3; //!persist
 bool dark = false;
-bool mute = false;
+bool mute = false; //!persist
 bool onTime = true;
 bool initial = false;
+
+
+persistSliderVal ({required int sliderVal}) async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  prefs.setInt("SliderVal", sliderVal);
+}
+
+persistMute ({required bool mute}) async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  prefs.setBool("mute", mute);
+}
+ 
+ 
+getMute () async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  bool mute = prefs.getBool("mute")!;
+  return mute;
+}
+
+getSliderVal () async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  bool sliderVal = prefs.getBool("SliderVal")!;
+  return sliderVal;
+}
+
 
 Future<void> speaking({required String say})async{
   await ftts.setLanguage("en-US");
@@ -71,11 +198,11 @@ Future<void> speaking({required String say})async{
 
 void checkBattery(){
   if(batteryState == BatteryState.discharging 
-      && percentage > _sliderVal * 10 
+      && percentage > sliderVal * 10 
      ){
     speaking(say: "Battery is\n$percentage\nPercent");
   }else if (batteryState == BatteryState.discharging 
-              && percentage <= _sliderVal * 10
+              && percentage <= sliderVal * 10
               && percentage != 100){
                 speaking(say: "Battery is low\n\n$percentage\nPercent only\nConnect your charger\nnow");
   }else if (batteryState == BatteryState.charging){
@@ -128,13 +255,13 @@ void initState() {
       }
 
 
-  if (batteryState == BatteryState.charging && percentage <= _sliderVal * 10 ) {
+  if (batteryState == BatteryState.charging && percentage <= sliderVal * 10 ) {
 
       if (onTime) {
         speaking(say: "Well done!\nCharger is Connected");
         onTime = false;
       }
-    }else if(batteryState == BatteryState.charging && percentage > _sliderVal * 10){
+    }else if(batteryState == BatteryState.charging && percentage > sliderVal * 10){
       if (onTime) {
         speaking(say: "Charger is Connected");
         onTime = false;
@@ -143,16 +270,20 @@ void initState() {
 
     //for charging UI
     if (batteryState == BatteryState.charging) {
-       check1 ++;
+       batteryChargingcheck ++;
       setState(() {});
-      if (check1 == 11){
-        check1 = 0;
+      if (batteryChargingcheck == 11){
+        batteryChargingcheck = 0;
       }
     }
 
 
 
   if (check5 >= 5){
+
+    //mute = getMute();
+    //sliderVal = getSliderVal();
+
     notchargingIconChange();
     getBatteryPerentage();
 
@@ -163,7 +294,7 @@ void initState() {
     }
 
     if (batteryState == BatteryState.discharging && !mute) {
-      if (percentage <= _sliderVal * 10 && _sliderVal * 10 != 100){
+      if (percentage <= sliderVal * 10 && sliderVal * 10 != 100){
       speaking(say: "Battery is $percentage\nPercent only\nPlease, Connect your charger!");}
     }
 
@@ -180,9 +311,6 @@ void initState() {
 }
 
 
-void backGroundTask(){
-
-}
 
 // method created to display battery percent
 void getBatteryPerentage() async {
@@ -296,7 +424,7 @@ Widget BatteryBuild(BatteryState state) {
 		// 	color: Colors.blue,
 		// )),
 
-    child:Image(image: AssetImage("assets/images/bat$check1.png"))
+    child:Image(image: AssetImage("assets/images/bat$batteryChargingcheck.png"))
 		);
 
 		// third case is when the battery is
@@ -378,14 +506,16 @@ Widget build(BuildContext context) {
 	           max: 10,
 	           divisions: 10,
 	           // 11
-	           label: '${_sliderVal * 10}%',
+	           label: '${sliderVal * 10}%',
 	           // 12
-	           value: _sliderVal.toDouble(),
+	           value: sliderVal.toDouble(),
 	           // 13
 	           onChanged: (newValue) {
-	             setState(() {
-	               _sliderVal = newValue.round();
-	             });
+	            
+	               sliderVal = newValue.round();
+                 persistSliderVal(sliderVal: sliderVal);
+
+	              setState(() {});
 	           },
 	           // 14
 	           activeColor: dark ? brightColor : darkColor,
@@ -404,7 +534,7 @@ Widget build(BuildContext context) {
 	            child: Padding(
 	              padding: const EdgeInsets.all(5),
 	              child: CircleAvatar(
-	                      radius: wt * .15,
+	                      radius: wt * .13,
 	                      //backgroundColor:   const Color.fromARGB(255, 241, 120, 50),
 	                      backgroundImage: const AssetImage("assets/images/bg1.png"),
 	                      child: Padding(
@@ -416,16 +546,20 @@ Widget build(BuildContext context) {
 	                                //speaking(say: "Hello Michael");
 	                               if (mute){
 	                                 mute = false;
+                                   persistMute(mute: mute,);
 	                               }else{
-	                                 mute = true;}
+	                                 mute = true;
+                                   persistMute(mute: mute,);
+                                   }
+                                  
 	                               setState(() {});
 	                             },
 	                              icon: mute ?const Icon(Icons.volume_off,
 	                                         size: 55,
-	                                         color: Color.fromARGB(255, 240, 202, 133)
+	                                         color: Color.fromARGB(255, 124, 11, 3)
 	                                         ,) : const Icon(Icons.volume_up_rounded,
 	                                         size: 55,
-	                                         color: Color.fromARGB(255, 240, 202, 133)
+	                                         color: Color.fromARGB(255, 124, 11, 3)
 	                                         ,) 
 	                                         ),
 	                      ),
@@ -456,7 +590,7 @@ Widget build(BuildContext context) {
 	                                          topRight: Radius.circular(10),
 	                                        ),
 	                                      ),
-	                      child: Text("${_sliderVal * 10}", 
+	                      child: Text("${sliderVal * 10}", 
 	                                textAlign: TextAlign.center,
 	                                style: TextStyle(
 	                                fontWeight: FontWeight.w200,
@@ -486,7 +620,7 @@ Widget build(BuildContext context) {
 	                             },
 	                              icon: const Icon(Icons.battery_saver_rounded,
 	                                         size: 55,
-	                                         color: Color.fromARGB(255, 240, 202, 133),)),
+	                                         color: Color.fromARGB(255, 124, 11, 3),)),
 	                      ),
 	                        ),
 	                        ),
@@ -579,6 +713,7 @@ Widget build(BuildContext context) {
 	                                 dark = false;
 	                               }else{
 	                                 dark = true;
+
 	                               }
 	                             });
 	                           },
@@ -590,7 +725,28 @@ Widget build(BuildContext context) {
 	                   
 	                         IconButton(
 	                          // padding: EdgeInsets.all(10),
-	                           onPressed: (){},
+	                           onPressed: () => showDialog<String>(
+                                context: context,
+                                builder: (BuildContext context) => AlertDialog(
+                                  title: const Text('About'),
+                                  backgroundColor: const Color.fromARGB(255, 243, 219, 148),
+                                  content: const Text("""This app reminds you to charge your battery the right way.
+                                                        
+                                                        Adjust the Slider below to set threshold for remindals."""),
+                                  actions: <Widget>[
+                                    IconButton(
+                                      onPressed: () => speaking(say: """This app reminds you to charge your battery the right way. Adjust the Slider below to set threshold for reminders."""),
+                                      iconSize: 30,
+                                      color: Colors.green,
+                                      icon: const Icon(Icons.volume_up_rounded),
+                                    ),
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(context, 'OK'),
+                                      child: const Text('OK'),
+                                    ),
+                                  ],
+                                ),
+                              ),
 	                            icon: Icon(Icons.info_outline_rounded,
 	                                       size: 50,
 	                                       color: iconColor,)),

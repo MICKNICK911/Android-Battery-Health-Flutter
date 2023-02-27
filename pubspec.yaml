@@ -39,6 +39,7 @@ dependencies:
   battery_plus: ^3.0.2
   flutter_tts: ^3.5.1
   workmanager: ^0.5.1
+  shared_preferences: ^2.0.18
 
 dev_dependencies:
   flutter_test:
