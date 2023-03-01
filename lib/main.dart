@@ -1,5 +1,5 @@
 import 'dart:async';
-
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:battery_plus/battery_plus.dart';
 import 'package:flutter/services.dart';
@@ -16,6 +16,10 @@ void backGroundTask()async{
     FlutterTts ftts = FlutterTts();
     BatteryState batteryState = BatteryState.full;
     late StreamSubscription streamSubscription;
+    bool mute = false;
+    int sliderVal = 3;
+    bool localLang = false;
+    final player = AudioPlayer();
   
 
     Future<void> speaking({required String say})async{
@@ -39,35 +43,63 @@ void backGroundTask()async{
       percentagebg = level;
       }
 
-
-  getMute () async {
+  void getLang () async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    bool mute = prefs.getBool("mute")!;
-    return mute;
+    localLang = prefs.getBool("lang") ?? false;
   }
 
-  getSliderVal () async {
+  void getMute () async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    int sliderVal = prefs.getInt("SliderVal")!;
-    return sliderVal;
+    mute = prefs.getBool("mute") ?? false;
   }
 
+  void getSliderVal () async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    sliderVal = prefs.getInt("SliderVal") ?? 3;
+  }
 
-    bool mute = getMute() as bool;
-    int sliderVal = getSliderVal() as int;
+  void localSpeak ({required String sound}) async {
+  await player.play(AssetSource('audio/$sound.mp3'), volume: 1.0);
+}
+
+
+    
   //notchargingIconChange();
+    getLang();
+    getMute();
+    getSliderVal();
     getBatteryState();
     getBatteryPerentage();
 
-    if (batteryState == BatteryState.full && mute != true) {
-      speaking(say: "Battery is full\nPlease, Remove the charger!\n");
+    if (batteryState == BatteryState.full && !mute) {
+
+      if (localLang){
+      localSpeak(sound: "fullycharged");
+      await Future.delayed(const Duration(seconds: 3));
+      
+    }else{
+      speaking(say: "Battery is full\nPlease, Remove the charger!\n");}
+
     }else if(percentagebg == 100 && !mute){
-      speaking(say: "Battery is full\nPlease, Remove the charger!\n");
+      if (localLang){
+      localSpeak(sound: "fullycharged");
+      await Future.delayed(const Duration(seconds: 3));
+      
+    }else{
+      speaking(say: "Battery is full\nPlease, Remove the charger!\n");}
     }
 
     if (batteryState == BatteryState.discharging && !mute) {
       if (percentagebg <= sliderVal * 10 && sliderVal * 10 != 100){
+
+        if (localLang){
+      localSpeak(sound: "plugin");
+      await Future.delayed(const Duration(seconds: 7));
+      speaking(say: "$percentagebg\nPercent");
+      await Future.delayed(const Duration(seconds: 3));
+    }else{
       speaking(say: "Battery is $percentagebg\nPercent only\nPlease, Connect your charger!");}
+      }
     }
 
 														
@@ -158,33 +190,59 @@ int batteryChargingcheck = 0;
 int splash = 0;
 bool splashCheck = false;
 int  sliderVal = 3; //!persist
-bool dark = false;
+bool dark = false; //!persist
 bool mute = false; //!persist
+bool localLang = false; //!persist
 bool onTime = true;
 bool initial = false;
+bool noDisturb = true;
+final player = AudioPlayer();
 
 
-persistSliderVal ({required int sliderVal}) async {
+void persistLang ({required bool lang}) async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  prefs.setBool("lang", lang);
+}
+
+void persistSliderVal ({required int sliderVal}) async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
   prefs.setInt("SliderVal", sliderVal);
 }
 
-persistMute ({required bool mute}) async {
+void persistMute ({required bool mute}) async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
   prefs.setBool("mute", mute);
 }
  
- 
-getMute () async {
+void persistDark ({required bool dark}) async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
-  bool mute = prefs.getBool("mute")!;
-  return mute;
+  prefs.setBool("dark", dark);
 }
 
-getSliderVal () async {
+
+void getLang () async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
-  bool sliderVal = prefs.getBool("SliderVal")!;
-  return sliderVal;
+  localLang = prefs.getBool("lang") ?? false;
+}
+
+
+void getMute () async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  mute = prefs.getBool("mute") ?? false;
+}
+
+void getDark () async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  dark = prefs.getBool("dark") ?? false;
+}
+
+void getSliderVal () async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  sliderVal = prefs.getInt("SliderVal") ?? 3;
+}
+
+void localSpeak ({required String sound}) async {
+  await player.play(AssetSource('audio/$sound.mp3'), volume: 1.0);
 }
 
 
@@ -196,37 +254,97 @@ Future<void> speaking({required String say})async{
   await ftts.speak(say);
 }
 
-void checkBattery(){
+Future<void> checkBattery() async {
+
   if(batteryState == BatteryState.discharging 
       && percentage > sliderVal * 10 
      ){
-    speaking(say: "Battery is\n$percentage\nPercent");
+    
+    if (localLang){
+      localSpeak(sound: "batis");
+      await Future.delayed(const Duration(seconds: 3));
+      speaking(say: "$percentage\nPercent");
+      await Future.delayed(const Duration(seconds: 3));
+
+    }else{
+    speaking(say: "Battery is\n$percentage\nPercent");}
+
   }else if (batteryState == BatteryState.discharging 
               && percentage <= sliderVal * 10
               && percentage != 100){
-                speaking(say: "Battery is low\n\n$percentage\nPercent only\nConnect your charger\nnow");
+                
+    if (localLang){
+      localSpeak(sound: "plugin");
+      await Future.delayed(const Duration(seconds: 7));
+      speaking(say: "$percentage\nPercent");
+      await Future.delayed(const Duration(seconds: 3));
+      }else{
+    speaking(say: "Battery is low\n\n$percentage\nPercent only\nConnect your charger\nnow");}
+
   }else if (batteryState == BatteryState.charging){
-    speaking(say: "Charger is connected\nBattery is\n$percentage\nPercent");
+    if (localLang){
+      localSpeak(sound: "charging");
+      await Future.delayed(const Duration(seconds: 3));
+      speaking(say: "$percentage\nPercent");  
+      await Future.delayed(const Duration(seconds: 3)); 
+
+    }else{
+    speaking(say: "Charger is connected\nBattery is\n$percentage\nPercent");}
+
   }else if(batteryState == BatteryState.full || percentage == 100){
-    speaking(say: "Battery is $percentage\nPercent and fully charged");
+
+    if (localLang){
+      localSpeak(sound: "fully");
+      await Future.delayed(const Duration(seconds: 3));
+      speaking(say: "$percentage\nPercent");
+      await Future.delayed(const Duration(seconds: 3));
+
+    }else{
+    speaking(say: "Battery is $percentage\nPercent and fully charged");}
   }
   
-}
-
-
-																			
+}																			
 
 @override
 void initState() {
 	super.initState();
+  
 	// calling the method to get battery state
 	getBatteryState();
 
+  getMute();
+  getDark();
+  getSliderVal();
+  getLang();
+
 	// calling the method to get battery percentage
-	Timer.periodic(const Duration(seconds: 1), (timer) {
+	Timer.periodic(const Duration(seconds: 1), (timer) async {
   check5 ++;
   splash ++;
 
+
+  if (batteryState == BatteryState.charging) {
+    if (noDisturb) {
+      noDisturb = false;
+      persistMute(mute: false);
+      getMute();
+      setState(() {});
+    }
+  }
+
+  if (batteryState == BatteryState.discharging) {
+    if (!noDisturb) {
+      noDisturb = true;
+    }
+  }
+
+  if (batteryState == BatteryState.discharging && percentage == 100) {
+    persistMute(mute: true);
+    getMute();
+    setState(() {});
+  }
+  
+  //!Splash Screen
   if(!splashCheck){
     if(!initial){
       notchargingIconChange();
@@ -239,15 +357,19 @@ void initState() {
     splashCheck = true;
   }
 
-  // if (percentage < 100) {
-  //   mute = false;
-  // }
-
   if (splashCheck){
 
   if (batteryState == BatteryState.discharging && percentage < 100) {
       if (!onTime) {
-        speaking(say: "Oops!, Charger is disconnected \n Battery is not fully charged");
+
+        if (localLang){
+            localSpeak(sound: "notfully");
+            await Future.delayed(const Duration(seconds: 6));
+            speaking(say: "$percentage\nPercent");
+            await Future.delayed(const Duration(seconds: 3));
+       }else{
+        speaking(say: "Oops!, Charger is disconnected \n Battery is not fully charged");}
+
         onTime = true;
       }
       }else if(batteryState == BatteryState.discharging && percentage == 100){
@@ -258,14 +380,30 @@ void initState() {
   if (batteryState == BatteryState.charging && percentage <= sliderVal * 10 ) {
 
       if (onTime) {
-        speaking(say: "Well done!\nCharger is Connected");
+
+        if (localLang){
+            localSpeak(sound: "welldone");
+            await Future.delayed(const Duration(seconds: 3));
+       }else{
+        speaking(say: "Well done!\nCharger is Connected");}
+
         onTime = false;
       }
+
     }else if(batteryState == BatteryState.charging && percentage > sliderVal * 10){
+
       if (onTime) {
-        speaking(say: "Charger is Connected");
+
+        if (localLang){
+            localSpeak(sound: "charging");
+            await Future.delayed(const Duration(seconds: 3));
+            speaking(say: "$percentage\nPercent");
+            await Future.delayed(const Duration(seconds: 3));
+    }else{
+        speaking(say: "Charger is Connected");}
         onTime = false;
       }
+
     }
 
     //for charging UI
@@ -288,14 +426,35 @@ void initState() {
     getBatteryPerentage();
 
     if (batteryState == BatteryState.full && !mute) {
+
+      if (localLang){
+      localSpeak(sound: "fullycharged");
+      await Future.delayed(const Duration(seconds: 3));
+      
+    }else{
       speaking(say: "Battery is full\nPlease, Remove the charger!\n");
+
+      }
+
     }else if(percentage == 100 && !mute){
-      speaking(say: "Battery is full\nPlease, Remove the charger!\n");
+      if (localLang){
+      localSpeak(sound: "fullycharged");
+      await Future.delayed(const Duration(seconds: 3));
+    }else{
+      speaking(say: "Battery is full\nPlease, Remove the charger!\n");}
     }
 
     if (batteryState == BatteryState.discharging && !mute) {
       if (percentage <= sliderVal * 10 && sliderVal * 10 != 100){
+
+        if (localLang){
+      localSpeak(sound: "plugin");
+      await Future.delayed(const Duration(seconds: 7));
+      speaking(say: "$percentage\nPercent");
+      await Future.delayed(const Duration(seconds: 3));
+    }else{
       speaking(say: "Battery is $percentage\nPercent only\nPlease, Connect your charger!");}
+      }
     }
 
 
@@ -395,13 +554,6 @@ Widget BatteryBuild(BatteryState state) {
 		return Container(
 		width: wt,
 		height: ht,
-			
-		// ignore: prefer_const_constructors
-		// child: (Icon(
-		// 	Icons.battery_full,
-		// 	size: 200,
-		// 	color: Colors.green,
-		// )),
 
     child:const Image(image: AssetImage("assets/images/bat10.png"))
 		);
@@ -409,20 +561,11 @@ Widget BatteryBuild(BatteryState state) {
 	// Second case is when battery is charging
 	// then it will show blue in color
 	case BatteryState.charging:
-
-
 		
 		// ignore: sized_box_for_whitespace
 		return Container(
 		width: wt,
 		height: ht,
-			
-		// ignore: prefer_const_constructors
-		// child: (Icon(
-		// 	Icons.battery_charging_full,
-		// 	size: 200,
-		// 	color: Colors.blue,
-		// )),
 
     child:Image(image: AssetImage("assets/images/bat$batteryChargingcheck.png"))
 		);
@@ -436,14 +579,6 @@ Widget BatteryBuild(BatteryState state) {
 		return Container(
 		width: wt,
 		height: ht,
-			
-		// ignore: prefer_const_constructors
-		// child: (Icon(
-		// 	Icons.battery_alert,
-		// 	size: 200,
-		// 	color: Colors.red,
-		// )),
-
 
     child:Image(image: AssetImage("assets/images/bat$changenum.png"))
 
@@ -454,6 +589,7 @@ Widget BatteryBuild(BatteryState state) {
 
 @override
 Widget build(BuildContext context) {
+
  double ht = MediaQuery.of(context).size.height;
  double wt = MediaQuery.of(context).size.width;
 
@@ -461,12 +597,7 @@ Widget build(BuildContext context) {
  Color brightColor = const Color.fromARGB(255, 81, 248, 3);
  Color darkColor = const Color.fromARGB(255, 100, 3, 79);
 	return Scaffold(
-	// appBar: AppBar(
-	// 	backgroundColor: Colors.green,
-	// 	title: const Text('GeeksforGeeks',
-  // 		  style: TextStyle(color: Colors.white),),
-	// 	centerTitle: true,
-	// ),
+	
 	body: Stack(alignment: Alignment.topCenter,
 	 children: [Container(
 	height: ht,
@@ -496,9 +627,6 @@ Widget build(BuildContext context) {
 	            ),
 	            ]),
 	       
-	       // Displaying battery percentage
-	       // Text('Battery Percentage: $percentage',
-	       // 	style: const TextStyle(fontSize: 24),)
 	    SizedBox(height: 40,
 	               child:Slider(
 	           // 10
@@ -514,8 +642,9 @@ Widget build(BuildContext context) {
 	            
 	               sliderVal = newValue.round();
                  persistSliderVal(sliderVal: sliderVal);
+                 getSliderVal();
 
-	              setState(() {});
+	               setState(() {});
 	           },
 	           // 14
 	           activeColor: dark ? brightColor : darkColor,
@@ -545,11 +674,12 @@ Widget build(BuildContext context) {
 	                             onPressed: (){
 	                                //speaking(say: "Hello Michael");
 	                               if (mute){
-	                                 mute = false;
-                                   persistMute(mute: mute,);
+                                   persistMute(mute: false,);
+                                   getMute();
+
 	                               }else{
-	                                 mute = true;
-                                   persistMute(mute: mute,);
+                                   persistMute(mute: true,);
+                                   getMute();
                                    }
                                   
 	                               setState(() {});
@@ -664,24 +794,7 @@ Widget build(BuildContext context) {
 	                 Container(
 	                   width: wt * .30,
 	                   color: Colors.transparent,
-	                  //  child: Center(
-	                  //    child: Column(
-	                  //        mainAxisAlignment: MainAxisAlignment.start,
-	                  //        //crossAxisAlignment: CrossAxisAlignment.center,
-	                  //        children: const [
-	                  //          Padding(
-	                  //            padding: EdgeInsets.all(8.0),
-	                  //            child: SizedBox(
-	                  //                      height: 50,
-	                  //                      width: 50,
-	                  //                      child: Image(
-	                  //                        image: AssetImage("assets/images/logo.png"))),
-	                  //          ),
-	                   
-	                           
-	                  //        ],
-	                  //      ),
-	                  //  ),
+
 	                 ),
   
 	                 Expanded(
@@ -698,10 +811,22 @@ Widget build(BuildContext context) {
 	                       children: [
 	                         IconButton(
 	                           //padding: EdgeInsets.all(10),
-	                           onPressed: (){},
+	                           onPressed: (){
+                               setState(() {
+	                               if (localLang){
+                                   persistLang(lang: false);
+                                   getLang();
+	                               }else{
+                                   persistLang(lang: true);
+                                   getLang();
+
+	                               }
+	                             });
+                             },
 	                            icon: Icon(Icons.translate_rounded,
 	                                       size: 50,
-	                                       color: iconColor,)),
+	                                       //color: iconColor,
+                                         color: localLang? Colors.red : iconColor,)),
   
 	                         SizedBox(height: ht * .10,),
 	                   
@@ -710,9 +835,11 @@ Widget build(BuildContext context) {
 	                           onPressed: (){
 	                             setState(() {
 	                               if (dark){
-	                                 dark = false;
+                                   persistDark(dark: false);
+                                   getDark();
 	                               }else{
-	                                 dark = true;
+                                   persistDark(dark: true);
+                                   getDark();
 
 	                               }
 	                             });
