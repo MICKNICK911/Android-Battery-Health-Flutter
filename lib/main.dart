@@ -75,7 +75,6 @@ void backGroundTask()async{
 
       if (localLang){
       localSpeak(sound: "fullycharged");
-      await Future.delayed(const Duration(seconds: 3));
       
     }else{
       speaking(say: "Battery is full\nPlease, Remove the charger!\n");}
@@ -83,7 +82,7 @@ void backGroundTask()async{
     }else if(percentagebg == 100 && !mute){
       if (localLang){
       localSpeak(sound: "fullycharged");
-      await Future.delayed(const Duration(seconds: 3));
+      
       
     }else{
       speaking(say: "Battery is full\nPlease, Remove the charger!\n");}
@@ -96,7 +95,7 @@ void backGroundTask()async{
       localSpeak(sound: "plugin");
       await Future.delayed(const Duration(seconds: 7));
       speaking(say: "$percentagebg\nPercent");
-      await Future.delayed(const Duration(seconds: 3));
+
     }else{
       speaking(say: "Battery is $percentagebg\nPercent only\nPlease, Connect your charger!");}
       }
@@ -264,7 +263,6 @@ Future<void> checkBattery() async {
       localSpeak(sound: "batis");
       await Future.delayed(const Duration(seconds: 3));
       speaking(say: "$percentage\nPercent");
-      await Future.delayed(const Duration(seconds: 3));
 
     }else{
     speaking(say: "Battery is\n$percentage\nPercent");}
@@ -277,7 +275,7 @@ Future<void> checkBattery() async {
       localSpeak(sound: "plugin");
       await Future.delayed(const Duration(seconds: 7));
       speaking(say: "$percentage\nPercent");
-      await Future.delayed(const Duration(seconds: 3));
+
       }else{
     speaking(say: "Battery is low\n\n$percentage\nPercent only\nConnect your charger\nnow");}
 
@@ -285,8 +283,7 @@ Future<void> checkBattery() async {
     if (localLang){
       localSpeak(sound: "charging");
       await Future.delayed(const Duration(seconds: 3));
-      speaking(say: "$percentage\nPercent");  
-      await Future.delayed(const Duration(seconds: 3)); 
+      speaking(say: "$percentage\nPercent"); 
 
     }else{
     speaking(say: "Charger is connected\nBattery is\n$percentage\nPercent");}
@@ -297,7 +294,6 @@ Future<void> checkBattery() async {
       localSpeak(sound: "fully");
       await Future.delayed(const Duration(seconds: 3));
       speaking(say: "$percentage\nPercent");
-      await Future.delayed(const Duration(seconds: 3));
 
     }else{
     speaking(say: "Battery is $percentage\nPercent and fully charged");}
@@ -366,7 +362,7 @@ void initState() {
             localSpeak(sound: "notfully");
             await Future.delayed(const Duration(seconds: 6));
             speaking(say: "$percentage\nPercent");
-            await Future.delayed(const Duration(seconds: 3));
+  
        }else{
         speaking(say: "Oops!, Charger is disconnected \n Battery is not fully charged");}
 
@@ -383,7 +379,6 @@ void initState() {
 
         if (localLang){
             localSpeak(sound: "welldone");
-            await Future.delayed(const Duration(seconds: 3));
        }else{
         speaking(say: "Well done!\nCharger is Connected");}
 
@@ -398,7 +393,6 @@ void initState() {
             localSpeak(sound: "charging");
             await Future.delayed(const Duration(seconds: 3));
             speaking(say: "$percentage\nPercent");
-            await Future.delayed(const Duration(seconds: 3));
     }else{
         speaking(say: "Charger is Connected");}
         onTime = false;
@@ -429,8 +423,7 @@ void initState() {
 
       if (localLang){
       localSpeak(sound: "fullycharged");
-      await Future.delayed(const Duration(seconds: 3));
-      
+     
     }else{
       speaking(say: "Battery is full\nPlease, Remove the charger!\n");
 
@@ -439,7 +432,6 @@ void initState() {
     }else if(percentage == 100 && !mute){
       if (localLang){
       localSpeak(sound: "fullycharged");
-      await Future.delayed(const Duration(seconds: 3));
     }else{
       speaking(say: "Battery is full\nPlease, Remove the charger!\n");}
     }
@@ -451,7 +443,7 @@ void initState() {
       localSpeak(sound: "plugin");
       await Future.delayed(const Duration(seconds: 7));
       speaking(say: "$percentage\nPercent");
-      await Future.delayed(const Duration(seconds: 3));
+      
     }else{
       speaking(say: "Battery is $percentage\nPercent only\nPlease, Connect your charger!");}
       }
