@@ -74,7 +74,9 @@ flutter:
 
 flutter_icons:
   android: true
-  image_path: "assets/images/logo.png"
+  image_path: "assets/images/logo2.png"
+  adaptive_icon_foreground: "assets/images/logo2.png"
+  adaptive_icon_background: "#ffffff"
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware
